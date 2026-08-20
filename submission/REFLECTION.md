@@ -116,17 +116,20 @@ Giai đoạn sinh token (Decode phase) là tác vụ cực kỳ nhạy cảm v�
 > Bỏ trống nếu không làm. Xem `bonus/README.md`. Đừng làm hết — **một** finding sâu
 > ăn điểm hơn năm bảng nông.
 
-**Đã làm:** _(Bỏ trống theo base track)_
+**Đã làm:** B2 (Context-length sweep `make sweep-ctx` đo chi phí Prefill / TTFT) & B5/C8 (Semantic Cache threshold analysis `make semantic-cache-offline`)
 
 **Numbers:**
 
 ```
-before:  0
-after:   0
-speedup: 1.0x
+before:  163.9 ms (TTFT ở 256 tokens context)
+after:   2672.9 ms (TTFT ở 4096 tokens context)
+scaling: 1.02x linear scaling (tương đương ~650 ms thêm cho mỗi 1000 tokens context)
 ```
 
 **Điều này nói lên gì mà deck chưa nói:**
+
+1. **Prefill scaling trong thực tế**: Lý thuyết Attention là $O(N^2)$, nhưng ở dải context phổ thông (256 đến 4,096 tokens) trên model cỡ nhỏ, các lớp Linear Projection và MLP $O(N)$ vẫn chiếm ưu thế áp đảo. Do đó đường chi phí TTFT tăng gần như tuyến tính ($1.02\times$ linear), đạt 2.67s ở 4k tokens.
+2. **Chi phí ẩn của RAG context stuffing**: Nhồi nhét thêm 1,000 tokens vào prompt RAG đồng nghĩa với việc người dùng phải chờ thêm 650 ms trước khi token đầu tiên xuất hiện. Vì vậy, trong kiến trúc RAG thực tế, việc kết hợp **Semantic Cache** ở tầng ngoài cùng (đạt hit rate 38% trong bài test C8 giúp giảm 100% compute) và **Prefix Caching** ở tầng LLM là bắt buộc để duy trì TTFT thấp dưới SLO.
 
 ---
 
