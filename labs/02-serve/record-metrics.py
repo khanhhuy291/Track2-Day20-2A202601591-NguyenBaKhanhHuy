@@ -41,8 +41,8 @@ LINE = re.compile(r"^([a-zA-Z_:][a-zA-Z0-9_:]*)(?:\{[^}]*\})?\s+([0-9eE.+-]+)$")
 def scrape(url: str) -> dict[str, float]:
     out: dict[str, float] = {}
     try:
-        text = httpx.get(url, timeout=3.0).text
-    except httpx.HTTPError:
+        text = httpx.get(url, timeout=10.0).text
+    except Exception:
         return out
     for raw in text.splitlines():
         if raw.startswith("#"):
@@ -85,9 +85,9 @@ def main() -> int:
         else:
             misses += 1
             print("   (scrape failed)")
-            if not rows and misses >= 3:
+            if not rows and misses >= 10:
                 labkit.die(
-                    f"Nothing at {args.url} after 3 tries.",
+                    f"Nothing at {args.url} after 10 tries.",
                     "Start the server first: make serve   (it enables --metrics by default)",
                 )
         time.sleep(args.interval)
